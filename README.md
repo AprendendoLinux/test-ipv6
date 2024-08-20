@@ -30,7 +30,7 @@ A aplicação realiza uma verificação simples para identificar se o IPv6 está
         image: aprendendolinux/test-ipv6
         restart: always
         ports:
-          - '5000:5000'
+          - '8080:8080'
     ```
 
 3. **Suba o Contêiner**: Execute o comando abaixo para iniciar o contêiner:
