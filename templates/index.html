@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Endereço IP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        async function getIPInfo() {
+            try {
+                const ipv4Response = await fetch('https://api.ipify.org?format=json');
+                const ipv4Data = await ipv4Response.json();
+                const clientIP = ipv4Data.ip;
+
+                document.getElementById('ipv4-address').textContent = clientIP;
+
+                const serverResponse = await fetch('/ip-info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ip: clientIP})
+                });
+
+                const serverData = await serverResponse.json();
+                document.getElementById('provider-info').textContent = serverData.org;
+                document.getElementById('reverse-dns').textContent = serverData.reverse_dns || 'Não encontrado';
+
+                const ipv6Response = await fetch('https://api6.ipify.org?format=json');
+                const ipv6Data = await ipv6Response.json();
+                if (ipv6Data.ip) {
+                    document.getElementById('ipv6-address').textContent = ipv6Data.ip;
+                    document.getElementById('ipv6-message').textContent = 'Parabéns! Você está usando IPv6!';
+                    document.getElementById('ipv6-message').classList.add('success');
+                    document.querySelector('.logo-ipv6').style.display = 'block';
+                } else {
+                    document.getElementById('ipv6-address').textContent = 'Não detectado';
+                    document.getElementById('ipv6-message').textContent = 'Lamentamos, IPv6 não detectado. Você está usando apenas IPv4.';
+                    document.getElementById('ipv6-message').classList.add('error');
+                    document.querySelector('.logo-ipv4').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching IP info:', error);
+                document.getElementById('ipv6-address').textContent = 'Não detectado';
+                document.getElementById('ipv6-message').textContent = 'Lamentamos, IPv6 não detectado. Você está usando apenas IPv4.';
+                document.getElementById('ipv6-message').classList.add('error');
+                document.querySelector('.logo-ipv4').style.display = 'block';
+            }
+        }
+
+        window.onload = getIPInfo;
+    </script>
+</head>
+<body>
+<div class="banner">
+        <a href="https://www.aprendendolinux.com">
+            <img src="https://downloads.aprendendolinux.com/imagens/banner.jpg" alt="Aprendendo Linux">
+        </a>
+    </div>
+	<br><br>
+    <div class="container">
+        <div class="logo logo-ipv6">IPv6</div>
+        <div class="logo logo-ipv4">IPv4</div>
+        <h1>Seu Endereço IP</h1>
+        <p>IPv4: <span id="ipv4-address">Carregando...</span></p>
+        <p>IPv6: <span id="ipv6-address">Carregando...</span></p>
+        <p id="ipv6-message" class="message">Carregando...</p>
+        <p>Provedor: <span id="provider-info">Carregando...</span></p>
+        <p>DNS Reverso: <span id="reverse-dns">Carregando...</span></p>
+    </div>
+<br><br>
+<div class="banner">
+        <a href="https://www.aprendendolinux.com">
+            <img src="https://downloads.aprendendolinux.com/imagens/banner.jpg" alt="Aprendendo Linux">
+        </a>
+    </div>
+</body>
+</html>
