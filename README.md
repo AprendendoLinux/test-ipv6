@@ -42,7 +42,7 @@ A aplicação realiza uma verificação simples para identificar se o IPv6 está
 4. **Acesse a Aplicação**: Depois que o contêiner estiver em execução, acesse a aplicação de fora usando o seguinte endereço:
 
     ```
-    http://endereco-do-servidor.dominio:5000
+    http://endereco-do-servidor.dominio:8080
     ```
 
 5. **Verifique a Detecção de IPv6**: A aplicação irá mostrar se o IPv6 está disponível na sua rede.
