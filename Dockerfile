@@ -1,7 +1,7 @@
 FROM python:3.9.2-slim
 WORKDIR /opt
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py /opt
-EXPOSE 5000
+#COPY app.py static templates dependencias.txt /opt
+COPY . /opt
+RUN pip install --no-cache-dir -r /opt/dependencias.txt
+EXPOSE 8080
 CMD ["python3", "/opt/app.py"]
