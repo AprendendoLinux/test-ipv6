@@ -1,0 +1,41 @@
+/* styles-footer.css */
+
+/* Adiciona estilos para o rodapé */
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f1f1f1;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Estilo para o link do rodapé */
+.footer-link {
+    text-decoration: none;
+    color: #333;
+    font-size: 0.8em; /* Fonte pequena */
+    display: inline-block;
+}
+
+/* Adiciona underline no hover */
+.footer-link:hover {
+    text-decoration: underline;
+}
+
+/* Ajusta o texto do IPv6 para não desconfigurar o layout */
+.ipv6-address-container {
+    display: inline-block;
+    max-width: 100%; /* Limita a largura do texto */
+    white-space: nowrap; /* Impede a quebra de linha */
+    overflow: hidden; /* Oculta o texto que ultrapassa o limite */
+    text-overflow: ellipsis; /* Adiciona reticências no final se o texto for muito longo */
+}
+
+/* Ajustes adicionais para telas pequenas */
+@media (max-width: 600px) {
+    .footer {
+        font-size: 0.7em; /* Ajusta o tamanho da fonte para telas menores */
+    }
+}
