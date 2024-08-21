@@ -3,6 +3,7 @@
 <head>
     <title>Endereço IP</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles-footer.css') }}">
     <script>
         async function getIPInfo() {
             try {
@@ -61,7 +62,7 @@
         <div class="logo logo-ipv4">IPv4</div>
         <h1>Seu Endereço IP</h1>
         <p>IPv4: <span id="ipv4-address">Carregando...</span></p>
-        <p>IPv6: <span id="ipv6-address">Carregando...</span></p>
+        <p>IPv6: <span id="ipv6-address" class="ipv6-address-container">Carregando...</span></p>
         <p id="ipv6-message" class="message">Carregando...</p>
         <p>Provedor: <span id="provider-info">Carregando...</span></p>
         <p>DNS Reverso: <span id="reverse-dns">Carregando...</span></p>
@@ -72,5 +73,9 @@
             <img src="https://downloads.aprendendolinux.com/imagens/banner.jpg" alt="Aprendendo Linux">
         </a>
     </div>
+<!-- Rodapé -->
+<footer class="footer">
+    <p><a href="https://www.henrique.tec.br" class="footer-link">Desenvolvido Por Henrique Fagundes</a></p>
+</footer>
 </body>
 </html>
