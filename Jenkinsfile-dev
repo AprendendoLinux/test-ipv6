@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
+        GITHUB_REPO = 'AprendendoLinux/test-ipv6.git'
         DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
         IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
         APP_DIR = '/var/jenkins_home' // Diretório no Dev
@@ -20,7 +21,7 @@ pipeline {
                             sh '''
                                 rm -rf ${APP_DIR}/${APP_NAME}
                                 cd ${APP_DIR}
-                                git clone https://x-access-token:${GIT_TOKEN}@github.com/AprendendoLinux/test-ipv6.git
+                                git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO}
                                 echo 'Repositório clonado no Dev.'
                             '''
                         }
