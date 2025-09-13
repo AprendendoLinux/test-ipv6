@@ -5,31 +5,30 @@ pipeline {
         REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
         DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
         IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
-        APP_DIR = '/var/jenkins_home/workspace/AppIPv6Detect' // Diretório no Dev
+        APP_DIR = '/srv/test-ipv6' // Diretório no Dev
         GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
         DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
     }
 
     stages {
-        // stage('Git Clone no Dev') {
-        //     steps {
-        //         script {
-        //             try {
-        //                 withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
-        //                     sh '''
-        //                         mkdir -p /srv
-        //                         cd /srv
-        //                         git clone https://x-access-token:${GIT_TOKEN}@github.com/AprendendoLinux/test-ipv6.git
-        //                         echo 'Repositório clonado no Dev.'
-        //                     '''
-        //                 }
-        //             } catch (Exception e) {
-        //                 echo "Erro no Git Clone: ${e.message}"
-        //                 throw e
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Git Clone no Dev') {
+            steps {
+                script {
+                    try {
+                        withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
+                            sh '''
+                                cd /srv
+                                git clone https://x-access-token:${GIT_TOKEN}@github.com/AprendendoLinux/test-ipv6.git
+                                echo 'Repositório clonado no Dev.'
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "Erro no Git Clone: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
 
         stage('Docker Login e Build da Imagem') {
             steps {
