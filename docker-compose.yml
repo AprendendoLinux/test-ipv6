@@ -5,8 +5,6 @@ networks:
 
 services:
   test-ipv6:
-    depends_on:
-      - proxy
     container_name: test-ipv6
     hostname: test-ipv6
     networks:
