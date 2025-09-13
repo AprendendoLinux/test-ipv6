@@ -7,7 +7,7 @@ pipeline {
         IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
         APP_DIR = '/var/jenkins_home/workspace/AppIPv6Detect' // Diretório no Dev
         GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
-        DOCKER_CREDS_ID = 'gitauth_password' // ID da credencial Jenkins: Username with Password
+        DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
     }
 
     stages {
