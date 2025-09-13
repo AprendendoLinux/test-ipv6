@@ -98,4 +98,3 @@ pipeline {
             echo 'Pipeline falhou. Verifique logs e conexões SSH/Docker Prod.'
         }
     }
-}
