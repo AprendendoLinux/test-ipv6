@@ -38,7 +38,7 @@ pipeline {
                     try {
                         withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                             sh """
-                                cd ${APP_DIR}
+                                cd ${APP_DIR}/${APP_NAME}
                                 docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
                                 docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
                                 echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
@@ -58,7 +58,7 @@ pipeline {
                     try {
                         withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                             sh """
-                                cd ${APP_DIR}
+                                cd ${APP_DIR}/${APP_NAME}
                                 docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
                                 docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
                                 docker push ${DOCKER_HUB_REPO}:latest
