@@ -1,27 +1,28 @@
 pipeline {
-    agent any  // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy
+    agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy
 
     environment {
-        REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git'  // Repo privado
-        DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6'  // Docker Hub repo
-        IMAGE_TAG = "${BUILD_ID}"  // Versionamento com ID do build Jenkins
-        APP_DIR = '/srv/test-ipv6/'  // Diretório no Dev
-        GITHUB_TOKEN_ID = 'gitauth_tokem'  // ID da credencial Jenkins: Secret Text com PAT
-        DOCKER_CREDS_ID = 'gitauth_password'  // ID da credencial Jenkins: Username with Password
+        REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
+        DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
+        IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
+        APP_DIR = '/srv/test-ipv6/' // Diretório no Dev
+        GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
+        DOCKER_CREDS_ID = 'gitauth_password' // ID da credencial Jenkins: Username with Password
     }
 
     stages {
-
         stage('Git Clone no Dev') {
             steps {
                 script {
                     try {
-                        sh """
-                            mkdir -p /srv
-                            cd /srv
-                            git clone https://x-access-token:\${GIT_TOKEN}@github.com/AprendendoLinux/test-ipv6.git
-                            echo 'Repositório clonado no Dev.'
-                        """
+                        withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
+                            sh '''
+                                mkdir -p /srv
+                                cd /srv
+                                git clone https://x-access-token:${GIT_TOKEN}@github.com/AprendendoLinux/test-ipv6.git
+                                echo 'Repositório clonado no Dev.'
+                            '''
+                        }
                     } catch (Exception e) {
                         echo "Erro no Git Clone: ${e.message}"
                         throw e
@@ -30,17 +31,18 @@ pipeline {
             }
         }
 
-
         stage('Docker Login e Build da Imagem') {
             steps {
                 script {
                     try {
-                        sh """
-                            cd ${APP_DIR}
-                            docker login -u \${DOCKER_USER} -p \${DOCKER_PASS}
-                            docker build -t ${DOCKER_HUB_REPO}:\${IMAGE_TAG} .
-                            echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:\${IMAGE_TAG}'
-                        """
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}
+                                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+                                docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
+                                echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
+                            """
+                        }
                     } catch (Exception e) {
                         echo "Erro no Login ou no Build da Imagem: ${e.message}"
                         throw e
@@ -49,18 +51,19 @@ pipeline {
             }
         }
 
-
         stage('Push para Docker Hub') {
             steps {
                 script {
                     try {
-                        sh """
-                            cd ${APP_DIR}
-                            docker push ${DOCKER_HUB_REPO}:\${IMAGE_TAG}
-                            docker tag ${DOCKER_HUB_REPO}:\${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
-                            docker push ${DOCKER_HUB_REPO}:latest
-                            echo 'Imagem pushada do Dev para Docker Hub.'
-                        """
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}
+                                docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+                                docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
+                                docker push ${DOCKER_HUB_REPO}:latest
+                                echo 'Imagem pushada do Dev para Docker Hub.'
+                            """
+                        }
                     } catch (Exception e) {
                         echo "Erro Push para Docker Hub: ${e.message}"
                         throw e
@@ -69,18 +72,17 @@ pipeline {
             }
         }
 
-
         stage('Deploy no Servidor Prod') {
             steps {
                 script {
                     try {
-                        sh """
+                        sh '''
                             cd ${WORKSPACE}
                             docker-compose down --remove-orphans
                             docker-compose pull
                             docker-compose up -d
-                            echo 'Deploy concluído no Prod. Acesse http://${PROD_HOST}:8080'
-                        """
+                            echo "Deploy concluído no Prod. Acesse http://${PROD_HOST}:8080"
+                        '''
                     } catch (Exception e) {
                         echo "Erro no Deploy no Prod: ${e.message}"
                         throw e
@@ -88,13 +90,14 @@ pipeline {
                 }
             }
         }
-
+    }
 
     post {
         success {
-            echo 'Pipeline bem-sucedida! Todas as ações executadas Prod.'
+            echo 'Pipeline bem-sucedida! Todas as ações executadas no Prod.'
         }
         failure {
-            echo 'Pipeline falhou. Verifique logs e conexões SSH/Docker Prod.'
+            echo 'Pipeline falhou. Verifique logs e conexões SSH/Docker no Prod.'
         }
     }
+}
