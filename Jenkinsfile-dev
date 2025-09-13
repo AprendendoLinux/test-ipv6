@@ -10,7 +10,7 @@ pipeline {
         APP_NAME = 'test-ipv6' // Nome do app
         GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
         DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
-        PROD_HOST = 'echelon.aprendendolinux.com.br' // Hostname ou IP do Prod
+        PROD_HOST = 'echelon.aprendendolinux.com' // Hostname ou IP do Prod
     }
 
     stages {
