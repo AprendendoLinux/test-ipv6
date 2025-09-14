@@ -1,136 +1,136 @@
-pipeline { agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy
-environment {
-    REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
-    GITHUB_REPO = 'AprendendoLinux/test-ipv6.git' // Repostiório no GitHub
-    DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
-    IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
-    APP_DIR = '/var/jenkins_home' // Diretório no Dev
-    APP_NAME = 'test-ipv6' // Nome do app
-    GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
-    DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
-    PROD_HOST = 'echelon.aprendendolinux.com' // Hostname ou IP do Prod
-    PORTAINER_URL = 'http://portainer:9000' // URL do Portainer no Prod
-    PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
-    STACK_NAME = 'test-ipv6-stack' // Nome da stack no Portainer
-}
+pipeline {
+    agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy
+    environment {
+        REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
+        GITHUB_REPO = 'AprendendoLinux/test-ipv6.git' // Repostiório no GitHub
+        DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
+        IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
+        APP_DIR = '/var/jenkins_home' // Diretório no Dev
+        APP_NAME = 'test-ipv6' // Nome do app
+        GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
+        DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
+        PROD_HOST = 'echelon.aprendendolinux.com' // Hostname ou IP do Prod
+        PORTAINER_URL = 'http://portainer:9000' // URL do Portainer no Prod
+        PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
+        STACK_NAME = 'test-ipv6-stack' // Nome da stack no Portainer
+    }
 
-stages {
-    stage('Git Clone no Dev') {
-        steps {
-            script {
-                try {
-                    withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
-                        sh '''
-                            rm -rf ${APP_DIR}/${APP_NAME}
-                            cd ${APP_DIR}
-                            git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO}
-                            echo 'Repositório clonado no Dev.'
-                        '''
+    stages {
+        stage('Git Clone no Dev') {
+            steps {
+                script {
+                    try {
+                        withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
+                            sh '''
+                                rm -rf ${APP_DIR}/${APP_NAME}
+                                cd ${APP_DIR}
+                                git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO}
+                                echo 'Repositório clonado no Dev.'
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "Erro no Git Clone: ${e.message}"
+                        throw e
                     }
-                } catch (Exception e) {
-                    echo "Erro no Git Clone: ${e.message}"
-                    throw e
                 }
             }
         }
-    }
 
-    stage('Docker Login e Build da Imagem') {
-        steps {
-            script {
-                try {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            cd ${APP_DIR}/${APP_NAME}
-                            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-                            docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
-                            echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
-                        """
+        stage('Docker Login e Build da Imagem') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}/${APP_NAME}
+                                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+                                docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
+                                echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Erro no Login ou no Build da Imagem: ${e.message}"
+                        throw e
                     }
-                } catch (Exception e) {
-                    echo "Erro no Login ou no Build da Imagem: ${e.message}"
-                    throw e
                 }
             }
         }
-    }
 
-    stage('Push para Docker Hub') {
-        steps {
-            script {
-                try {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            cd ${APP_DIR}/${APP_NAME}
-                            docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
-                            docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
-                            docker push ${DOCKER_HUB_REPO}:latest
-                            echo 'Imagem pushada do Dev para Docker Hub.'
-                        """
+        stage('Push para Docker Hub') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}/${APP_NAME}
+                                docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+                                docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
+                                docker push ${DOCKER_HUB_REPO}:latest
+                                echo 'Imagem pushada do Dev para Docker Hub.'
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Erro Push para Docker Hub: ${e.message}"
+                        throw e
                     }
-                } catch (Exception e) {
-                    echo "Erro Push para Docker Hub: ${e.message}"
-                    throw e
                 }
             }
         }
-    }
 
-    stage('Deploy no Servidor Prod via Portainer') {
-        steps {
-            script {
-                try {
-                    withCredentials([usernamePassword(credentialsId: "${PORTAINER_CREDS_ID}", usernameVariable: 'PORTAINER_USER', passwordVariable: 'PORTAINER_PASS')]) {
-                        sh '''
-                            # Obter token JWT do Portainer
-                            TOKEN=$(curl -s -X POST "${PORTAINER_URL}/api/auth" \
-                                -H "Content-Type: application/json" \
-                                -d "{\\"Username\\":\\"${PORTAINER_USER}\\",\\"Password\\":\\"${PORTAINER_PASS}\\"}" | jq -r '.jwt')
-
-                            # Obter ID do endpoint Docker (assumindo endpoint padrão ID=1, ajustar se necessário)
-                            ENDPOINT_ID=1
-
-                            # Verificar se a stack já existe e obter seu ID
-                            STACK_ID=$(curl -s "${PORTAINER_URL}/api/stacks" \
-                                -H "Authorization: Bearer ${TOKEN}" | jq -r ".[] | select(.Name==\\"${STACK_NAME}\\") | .Id")
-
-                            # Ler o conteúdo do docker-compose.yml
-                            COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
-                            COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
-
-                            if [ -z "$STACK_ID" ]; then
-                                # Criar nova stack
-                                curl -s -X POST "${PORTAINER_URL}/api/stacks?type=2&method=string&endpointId=${ENDPOINT_ID}" \
-                                    -H "Authorization: Bearer ${TOKEN}" \
+        stage('Deploy no Servidor Prod via Portainer') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${PORTAINER_CREDS_ID}", usernameVariable: 'PORTAINER_USER', passwordVariable: 'PORTAINER_PASS')]) {
+                            sh '''
+                                # Obter token JWT do Portainer
+                                TOKEN=$(curl -s -X POST "${PORTAINER_URL}/api/auth" \
                                     -H "Content-Type: application/json" \
-                                    -d "{\\"Name\\":\\"${STACK_NAME}\\",\\"SwarmID\\":\\"\\",\\"StackFileContent\\":${COMPOSE_CONTENT}}"
-                                echo "Nova stack ${STACK_NAME} criada no Portainer."
-                            else
-                                # Atualizar stack existente
-                                curl -s -X PUT "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
-                                    -H "Authorization: Bearer ${TOKEN}" \
-                                    -H "Content-Type: application/json" \
-                                    -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}"
-                                echo "Stack ${STACK_NAME} atualizada no Portainer."
-                            fi
-                            echo "Deploy concluído no Prod via Portainer. Acesse http://${PROD_HOST}:8080"
-                        '''
+                                    -d "{\\"Username\\":\\"${PORTAINER_USER}\\",\\"Password\\":\\"${PORTAINER_PASS}\\"}" | jq -r '.jwt')
+
+                                ENDPOINT_ID=1
+                                STACK_ID=$(curl -s "${PORTAINER_URL}/api/stacks" \
+                                    -H "Authorization: Bearer ${TOKEN}" | jq -r ".[] | select(.Name==\\"${STACK_NAME}\\") | .Id")
+
+                                COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
+                                COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
+
+                                if [ -z "$STACK_ID" ]; then
+                                    RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/stacks?type=2&method=string&endpointId=${ENDPOINT_ID}" \
+                                        -H "Authorization: Bearer ${TOKEN}" \
+                                        -H "Content-Type: application/json" \
+                                        -d "{\\"Name\\":\\"${STACK_NAME}\\",\\"SwarmID\\":\\"\\",\\"StackFileContent\\":${COMPOSE_CONTENT}}")
+                                    if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
+                                        echo "Nova stack ${STACK_NAME} criada no Portainer."
+                                    else
+                                        echo "Erro ao criar a stack: $RESPONSE"
+                                        exit 1
+                                    fi
+                                else
+                                    curl -s -X PUT "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
+                                        -H "Authorization: Bearer ${TOKEN}" \
+                                        -H "Content-Type: application/json" \
+                                        -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}"
+                                    echo "Stack ${STACK_NAME} atualizada no Portainer."
+                                fi
+                                echo "Deploy concluído no Prod via Portainer. Acesse http://${PROD_HOST}:8080"
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "Erro no Deploy via Portainer: ${e.message}"
+                        throw e
                     }
-                } catch (Exception e) {
-                    echo "Erro no Deploy via Portainer: ${e.message}"
-                    throw e
                 }
             }
         }
     }
-}
 
-post {
-    success {
-        echo 'Pipeline bem-sucedida! Todas as ações executadas, deploy via Portainer concluído.'
+    post {
+        success {
+            echo 'Pipeline bem-sucedida! Todas as ações executadas, deploy via Portainer concluído.'
+        }
+        failure {
+            echo 'Pipeline falhou. Verifique logs, conexões SSH/Docker e API do Portainer no Prod.'
+        }
     }
-    failure {
-        echo 'Pipeline falhou. Verifique logs, conexões SSH/Docker e API do Portainer no Prod.'
-    }
-}
 }
