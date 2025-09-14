@@ -12,8 +12,12 @@ pipeline {
         PROD_HOST = 'echelon.aprendendolinux.com' // Hostname ou IP do Prod
         PORTAINER_URL = 'http://portainer:9000' // URL do Portainer no Prod
         PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
-        STACK_NAME = 'test-ipv6-stack' // Nome da stack no Portainer
+        STACK_NAME = 'test-ipv6' // Nome da stack no Portainer
         ENDPOINT_ID = 2 // ID fixo do ambiente 'echelon' identificado nos logs
+        // Para capiturar o ENDPOINT_ID, use:
+        // curl -s -X POST -H "Content-Type: application/json" -d '{"Username": "UsuarioDoPortainer", "Password": "SenhaDoPortainer"}' http://portainer:9000/api/auth
+        // O comando acima vai retonar sua API. Com a API em mãos, faça:
+        // curl -s -H "Authorization: Bearer SEU_TOKEN" http://portainer:9000/api/endpoints | jq -r '.[] | select(.Name == "nome-do-endpoint") | .Id'
     }
 
     stages {
@@ -57,26 +61,26 @@ pipeline {
             }
         }
 
-        // stage('Push para Docker Hub') {
-        //     steps {
-        //         script {
-        //             try {
-        //                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-        //                     sh """
-        //                         cd ${APP_DIR}/${APP_NAME}
-        //                         docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
-        //                         docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
-        //                         docker push ${DOCKER_HUB_REPO}:latest
-        //                         echo 'Imagem pushada para Docker Hub.'
-        //                     """
-        //                 }
-        //             } catch (Exception e) {
-        //                 echo "Erro Push para Docker Hub: ${e.message}"
-        //                 throw e
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Push para Docker Hub') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}/${APP_NAME}
+                                docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+                                docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
+                                docker push ${DOCKER_HUB_REPO}:latest
+                                echo 'Imagem pushada para Docker Hub.'
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Erro Push para Docker Hub: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
 
         stage('Deploy no Servidor Prod via Portainer') {
             steps {

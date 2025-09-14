@@ -3,12 +3,12 @@ networks:
     external: true
 
 services:
-  test-ipv6-jenkins:
-    container_name: test-ipv6-jenkins
-    hostname: test-ipv6-jenkins
+  test-ipv6:
+    container_name: test-ipv6
+    hostname: test-ipv6
     networks:
       - echelon
     image: aprendendolinux/test-ipv6
     restart: always
-    ports:
-       - 8080:8080
+    # ports:
+    #    - 8080:8080
