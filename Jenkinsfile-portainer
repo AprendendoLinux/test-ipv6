@@ -13,6 +13,7 @@ pipeline {
         PORTAINER_URL = 'http://portainer:9000' // URL do Portainer no Prod
         PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
         STACK_NAME = 'test-ipv6-stack' // Nome da stack no Portainer
+        ENDPOINT_NAME = 'echelon' // Nome do ambiente no Portainer (ajuste se necessário)
     }
 
     stages {
@@ -36,46 +37,46 @@ pipeline {
             }
         }
 
-        stage('Docker Login e Build da Imagem') {
-            steps {
-                script {
-                    try {
-                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh """
-                                cd ${APP_DIR}/${APP_NAME}
-                                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-                                docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
-                                echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
-                            """
-                        }
-                    } catch (Exception e) {
-                        echo "Erro no Login ou no Build da Imagem: ${e.message}"
-                        throw e
-                    }
-                }
-            }
-        }
-
-        // stage('Push para Docker Hub') {
+        // stage('Docker Login e Build da Imagem') {
         //     steps {
         //         script {
         //             try {
         //                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
         //                     sh """
         //                         cd ${APP_DIR}/${APP_NAME}
-        //                         docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
-        //                         docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
-        //                         docker push ${DOCKER_HUB_REPO}:latest
-        //                         echo 'Imagem pushada do Dev para Docker Hub.'
+        //                         docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+        //                         docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
+        //                         echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
         //                     """
         //                 }
         //             } catch (Exception e) {
-        //                 echo "Erro Push para Docker Hub: ${e.message}"
+        //                 echo "Erro no Login ou no Build da Imagem: ${e.message}"
         //                 throw e
         //             }
         //         }
         //     }
         // }
+
+        stage('Push para Docker Hub') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}/${APP_NAME}
+                                docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+                                docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
+                                docker push ${DOCKER_HUB_REPO}:latest
+                                echo 'Imagem pushada do Dev para Docker Hub.'
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Erro Push para Docker Hub: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
 
         stage('Deploy no Servidor Prod via Portainer') {
             steps {
@@ -95,7 +96,18 @@ pipeline {
                                     exit 1
                                 fi
 
-                                ENDPOINT_ID=1
+                                # Obter o ID do endpoint pelo nome 'echelon'
+                                ENDPOINTS_LIST=$(curl -s "${PORTAINER_URL}/api/endpoints" \
+                                    -H "Authorization: Bearer ${TOKEN}")
+                                echo "Lista de endpoints: $ENDPOINTS_LIST"
+                                ENDPOINT_ID=$(echo "$ENDPOINTS_LIST" | jq -r '.[] | select(.Name=="'${ENDPOINT_NAME}'") | .Id')
+                                echo "ID do endpoint '${ENDPOINT_NAME}': $ENDPOINT_ID"
+                                if [ -z "$ENDPOINT_ID" ]; then
+                                    echo "Erro: Endpoint '${ENDPOINT_NAME}' não encontrado no Portainer."
+                                    exit 1
+                                fi
+
+                                # Verificar se a stack já existe
                                 STACK_ID=$(curl -s "${PORTAINER_URL}/api/stacks" \
                                     -H "Authorization: Bearer ${TOKEN}" | jq -r ".[] | select(.Name==\\"${STACK_NAME}\\") | .Id")
 
