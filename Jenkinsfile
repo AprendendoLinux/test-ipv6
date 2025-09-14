@@ -3,10 +3,8 @@ pipeline {
     environment {
         REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
         GITHUB_REPO = 'AprendendoLinux/test-ipv6.git' // Repostiório no GitHub
-        BRANCH_NAME = 'main'
         DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
         IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
-        APP_NAME = 'test-ipv6' // Nome do app
         GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
         DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
         PROD_HOST = 'echelon.aprendendolinux.com' // Hostname ou IP do Prod
