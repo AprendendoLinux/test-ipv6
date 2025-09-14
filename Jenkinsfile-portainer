@@ -1,0 +1,106 @@
+pipeline {
+    agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy
+
+    environment {
+        REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
+        GITHUB_REPO = 'AprendendoLinux/test-ipv6.git' // Repostiório no GitHub
+        DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
+        IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
+        APP_DIR = '/var/jenkins_home' // Diretório no Dev
+        APP_NAME = 'test-ipv6' // Nome do app
+        GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
+        DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
+        PROD_HOST = 'echelon.aprendendolinux.com' // Hostname ou IP do Prod
+    }
+
+    stages {
+        stage('Git Clone no Dev') {
+            steps {
+                script {
+                    try {
+                        withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
+                            sh '''
+                                rm -rf ${APP_DIR}/${APP_NAME}
+                                cd ${APP_DIR}
+                                git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO}
+                                echo 'Repositório clonado no Dev.'
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "Erro no Git Clone: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Docker Login e Build da Imagem') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}/${APP_NAME}
+                                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+                                docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
+                                echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Erro no Login ou no Build da Imagem: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Push para Docker Hub') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}/${APP_NAME}
+                                docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+                                docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
+                                docker push ${DOCKER_HUB_REPO}:latest
+                                echo 'Imagem pushada do Dev para Docker Hub.'
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Erro Push para Docker Hub: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Deploy no Servidor Prod') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                            cd ${WORKSPACE}
+                            docker-compose down --remove-orphans
+                            docker-compose pull
+                            docker-compose up -d
+                            echo "Deploy concluído no Prod. Acesse http://${PROD_HOST}:8080"
+                        '''
+                    } catch (Exception e) {
+                        echo "Erro no Deploy no Prod: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline bem-sucedida! Todas as ações executadas no Prod.'
+        }
+        failure {
+            echo 'Pipeline falhou. Verifique logs e conexões SSH/Docker no Prod.'
+        }
+    }
+}
