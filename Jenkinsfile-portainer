@@ -95,15 +95,19 @@ pipeline {
                                 COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
                                 COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
 
+                                # Verificar se a rede echelon existe no endpoint (via SSH ou acesso direto)
+                                docker network ls | grep echelon || docker network create echelon
+
                                 if [ -z "$STACK_ID" ]; then
-                                    RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/stacks?type=2&method=string&endpointId=${ENDPOINT_ID}" \
+                                    RESPONSE=$(curl -v -X POST "${PORTAINER_URL}/api/stacks?type=2&method=string&endpointId=${ENDPOINT_ID}" \
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
-                                        -d "{\\"Name\\":\\"${STACK_NAME}\\",\\"SwarmID\\":\\"\\",\\"StackFileContent\\":${COMPOSE_CONTENT}}")
+                                        -d "{\\"Name\\":\\"${STACK_NAME}\\",\\"SwarmID\\":\\"\\",\\"StackFileContent\\":${COMPOSE_CONTENT}}" 2>&1)
+                                    echo "Resposta da API: $RESPONSE"
                                     if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
                                         echo "Nova stack ${STACK_NAME} criada no Portainer."
                                     else
-                                        echo "Erro ao criar a stack: $RESPONSE"
+                                        echo "Erro ao criar a stack. Resposta: $RESPONSE"
                                         exit 1
                                     fi
                                 else
