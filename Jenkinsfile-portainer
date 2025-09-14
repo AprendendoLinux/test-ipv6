@@ -83,10 +83,17 @@ pipeline {
                     try {
                         withCredentials([usernamePassword(credentialsId: "${PORTAINER_CREDS_ID}", usernameVariable: 'PORTAINER_USER', passwordVariable: 'PORTAINER_PASS')]) {
                             sh '''
-                                # Obter token JWT do Portainer
-                                TOKEN=$(curl -s -X POST "${PORTAINER_URL}/api/auth" \
+                                # Obter token JWT do Portainer com depuração
+                                AUTH_RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/auth" \
                                     -H "Content-Type: application/json" \
-                                    -d "{\\"Username\\":\\"${PORTAINER_USER}\\",\\"Password\\":\\"${PORTAINER_PASS}\\"}" | jq -r '.jwt')
+                                    -d "{\\"Username\\":\\"${PORTAINER_USER}\\",\\"Password\\":\\"${PORTAINER_PASS}\\"}")
+                                echo "Resposta da autenticação: $AUTH_RESPONSE"
+                                TOKEN=$(echo "$AUTH_RESPONSE" | jq -r '.jwt')
+                                echo "Token gerado: $TOKEN"
+                                if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+                                    echo "Erro: Token inválido ou não gerado. Verifique as credenciais."
+                                    exit 1
+                                fi
 
                                 ENDPOINT_ID=1
                                 STACK_ID=$(curl -s "${PORTAINER_URL}/api/stacks" \
@@ -95,14 +102,14 @@ pipeline {
                                 COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
                                 COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
 
-                                # Verificar se a rede echelon existe no endpoint (via SSH ou acesso direto)
+                                # Verificar se a rede echelon existe no endpoint
                                 docker network ls | grep echelon || docker network create echelon
 
                                 if [ -z "$STACK_ID" ]; then
-                                    RESPONSE=$(curl -v -X POST "${PORTAINER_URL}/api/stacks?type=2&method=string&endpointId=${ENDPOINT_ID}" \
+                                    RESPONSE=$(curl -v -X POST "${PORTAINER_URL}/api/stacks" \
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
-                                        -d "{\\"Name\\":\\"${STACK_NAME}\\",\\"SwarmID\\":\\"\\",\\"StackFileContent\\":${COMPOSE_CONTENT}}" 2>&1)
+                                        -d "{\\"Name\\":\\"${STACK_NAME}\\",\\"EndpointId\\":${ENDPOINT_ID},\\"StackFileContent\\":${COMPOSE_CONTENT}}" 2>&1)
                                     echo "Resposta da API: $RESPONSE"
                                     if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
                                         echo "Nova stack ${STACK_NAME} criada no Portainer."
