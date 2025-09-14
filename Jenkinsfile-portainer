@@ -109,10 +109,10 @@ pipeline {
                                 docker network ls | grep echelon || docker network create echelon
 
                                 if [ -z "$STACK_ID" ]; then
-                                    RESPONSE=$(curl -v -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
+                                    RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
-                                        -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"fromAppTemplate\\":false,\\"env\\":[]}" 2>&1)
+                                        -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"fromAppTemplate\\":false,\\"env\\":[]}")
                                     echo "Resposta da API: $RESPONSE"
                                     if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
                                         echo "Nova stack ${STACK_NAME} criada no Portainer."
@@ -121,10 +121,10 @@ pipeline {
                                         exit 1
                                     fi
                                 else
-                                    RESPONSE=$(curl -v -X PUT "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
+                                    RESPONSE=$(curl -s -X PUT "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
-                                        -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}" 2>&1)
+                                        -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}")
                                     echo "Resposta da API de atualização: $RESPONSE"
                                     echo "Stack ${STACK_NAME} atualizada no Portainer."
                                 fi
