@@ -1,15 +1,14 @@
 networks:
-  network-ipv6:
-    driver: bridge
-    enable_ipv6: true
+  echelon:
+    external: true
 
 services:
-  test-ipv6:
-    container_name: test-ipv6
-    hostname: test-ipv6
+  test-ipv6-jenkins:
+    container_name: test-ipv6-jenkins
+    hostname: test-ipv6-jenkins
     networks:
-      - network-ipv6
+      - echelon
     image: aprendendolinux/test-ipv6
     restart: always
     ports:
-      - '8080:8080'
+       - 8080:8080
