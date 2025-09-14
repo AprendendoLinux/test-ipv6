@@ -22,25 +22,25 @@ pipeline {
     }
 
     stages {
-        stage('Git Clone no Dev') {
-            steps {
-                script {
-                    try {
-                        withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
-                            sh '''
-                            rm -rf ${APP_DIR}/${APP_NAME}
-                            cd ${APP_DIR}
-                            git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO} -b ${BRANCH_NAME} ${APP_NAME}
-                            echo "Repositório clonado no Dev, branch ${BRANCH_NAME}."
-                            '''
-                        }
-                    } catch (Exception e) {
-                        echo "Erro no Git Clone: ${e.message}"
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Git Clone no Dev') {
+        //     steps {
+        //         script {
+        //             try {
+        //                 withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
+        //                     sh '''
+        //                     rm -rf ${APP_DIR}/${APP_NAME}
+        //                     cd ${APP_DIR}
+        //                     git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO} -b ${BRANCH_NAME} ${APP_NAME}
+        //                     echo "Repositório clonado no Dev, branch ${BRANCH_NAME}."
+        //                     '''
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo "Erro no Git Clone: ${e.message}"
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Docker Login e Build da Imagem') {
             steps {
@@ -48,7 +48,7 @@ pipeline {
                     try {
                         withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                             sh """
-                                cd ${APP_DIR}/${APP_NAME}
+                                cd ${WORKSPACE}/
                                 docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
                                 docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
                                 echo 'Imagem construída no Dev.'
@@ -68,7 +68,7 @@ pipeline {
                     try {
                         withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                             sh """
-                                cd ${APP_DIR}/${APP_NAME}
+                                cd ${WORKSPACE}
                                 docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
                                 docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
                                 docker push ${DOCKER_HUB_REPO}:latest
