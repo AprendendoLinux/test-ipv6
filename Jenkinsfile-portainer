@@ -27,10 +27,10 @@ pipeline {
                     try {
                         withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
                             sh '''
-                                rm -rf ${APP_DIR}/${APP_NAME}
-                                cd ${APP_DIR}
-                                git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO} -b ${BRANCH_NAME} ${APP_NAME}
-                                echo "Repositório clonado no Dev, branch ${BRANCH_NAME}."
+                            rm -rf ${APP_DIR}/${APP_NAME}
+                            cd ${APP_DIR}
+                            git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO} -b ${BRANCH_NAME} ${APP_NAME}
+                            echo "Repositório clonado no Dev, branch ${BRANCH_NAME}."
                             '''
                         }
                     } catch (Exception e) {
@@ -40,7 +40,6 @@ pipeline {
                 }
             }
         }
-    }
 
         stage('Docker Login e Build da Imagem') {
             steps {
