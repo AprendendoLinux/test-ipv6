@@ -24,22 +24,23 @@ pipeline {
         stage('Git Clone no Dev') {
             steps {
                 script {
-                try {
-                    withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
-                        sh '''
-                            rm -rf ${APP_DIR}/${APP_NAME}
-                            cd ${APP_DIR}
-                            git clone -b ${BRANCH_NAME} https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO}
-                            echo "Repositório clonado no Dev, branch ${BRANCH_NAME}."
-                        '''
+                    try {
+                        withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
+                            sh '''
+                                rm -rf ${APP_DIR}/${APP_NAME}
+                                cd ${APP_DIR}
+                                git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO} -b ${BRANCH_NAME} ${APP_NAME}
+                                echo "Repositório clonado no Dev, branch ${BRANCH_NAME}."
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "Erro no Git Clone: ${e.message}"
+                        throw e
                     }
-                } catch (Exception e) {
-                    echo "Erro no Git Clone: ${e.message}"
-                    throw e
-                }
                 }
             }
         }
+    }
 
         stage('Docker Login e Build da Imagem') {
             steps {
