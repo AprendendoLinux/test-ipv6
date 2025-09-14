@@ -56,26 +56,26 @@ pipeline {
             }
         }
 
-        stage('Push para Docker Hub') {
-            steps {
-                script {
-                    try {
-                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh """
-                                cd ${APP_DIR}/${APP_NAME}
-                                docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
-                                docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
-                                docker push ${DOCKER_HUB_REPO}:latest
-                                echo 'Imagem pushada do Dev para Docker Hub.'
-                            """
-                        }
-                    } catch (Exception e) {
-                        echo "Erro Push para Docker Hub: ${e.message}"
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Push para Docker Hub') {
+        //     steps {
+        //         script {
+        //             try {
+        //                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        //                     sh """
+        //                         cd ${APP_DIR}/${APP_NAME}
+        //                         docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+        //                         docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
+        //                         docker push ${DOCKER_HUB_REPO}:latest
+        //                         echo 'Imagem pushada do Dev para Docker Hub.'
+        //                     """
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo "Erro Push para Docker Hub: ${e.message}"
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Deploy no Servidor Prod via Portainer') {
             steps {
