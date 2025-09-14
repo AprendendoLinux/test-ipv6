@@ -85,43 +85,40 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${PORTAINER_CREDS_ID}", usernameVariable: 'PORTAINER_USER', passwordVariable: 'PORTAINER_PASS')]) {
                             sh '''
                                 # Obter token JWT do Portainer
-                                AUTH_RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/auth" \
+                                TOKEN=$(curl -s -X POST "${PORTAINER_URL}/api/auth" \
                                     -H "Content-Type: application/json" \
-                                    -d "{\\"Username\\":\\"${PORTAINER_USER}\\",\\"Password\\":\\"${PORTAINER_PASS}\\"}")
-                                TOKEN=$(echo "$AUTH_RESPONSE" | jq -r '.jwt')
+                                    -d "{\\"Username\\":\\"${PORTAINER_USER}\\",\\"Password\\":\\"${PORTAINER_PASS}\\"}" | jq -r '.jwt')
                                 if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
-                                    echo "Erro: Token inválido ou não gerado."
+                                    echo "Erro: Token inválido."
                                     exit 1
                                 fi
 
                                 # Verificar e remover stack existente
-                                STACKS_RAW=$(curl -s "${PORTAINER_URL}/api/stacks" \
-                                    -H "Authorization: Bearer ${TOKEN}")
-                                STACK_ID=$(echo "$STACKS_RAW" | tr -d '\\000-\\037' | jq -r '.[] | select(.Name=="'${STACK_NAME}'") | .Id')
+                                STACK_ID=$(curl -s "${PORTAINER_URL}/api/stacks" \
+                                    -H "Authorization: Bearer ${TOKEN}" | jq -r '.[] | select(.Name=="'${STACK_NAME}'") | .Id')
                                 if [ ! -z "$STACK_ID" ]; then
                                     curl -s -X DELETE "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
-                                        -H "Authorization: Bearer ${TOKEN}"
-                                    echo "Stack ${STACK_NAME} removida (ID: ${STACK_ID})."
+                                        -H "Authorization: Bearer ${TOKEN}" > /dev/null
+                                    echo "Stack removida."
                                 fi
 
                                 # Criar nova stack
-                                COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
-                                COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
+                                COMPOSE_CONTENT=$(cat "${APP_DIR}/${APP_NAME}/docker-compose.yml" | jq -sR .)
                                 RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
                                     -H "Authorization: Bearer ${TOKEN}" \
                                     -H "Content-Type: application/json" \
                                     -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"fromAppTemplate\\":false,\\"env\\":[]}")
                                 if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
-                                    echo "Nova stack ${STACK_NAME} criada."
+                                    echo "Stack criada."
                                 else
-                                    echo "Erro ao criar a stack. Resposta: $RESPONSE"
+                                    echo "Erro ao criar a stack."
                                     exit 1
                                 fi
 
-                                # Verificar se a rede echelon existe no endpoint
+                                # Verificar rede echelon
                                 docker network ls | grep echelon || docker network create echelon
 
-                                echo "Deploy concluído no Prod via Portainer. Acesse http://${PROD_HOST}:8080"
+                                echo "Deploy concluído. Acesse http://${PROD_HOST}:8080"
                             '''
                         }
                     } catch (Exception e) {
