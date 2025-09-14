@@ -96,11 +96,13 @@ pipeline {
                                     exit 1
                                 fi
 
-                                # Obter a lista de endpoints, limpando caracteres de controle
+                                # Obter a lista de endpoints e filtrar apenas Id e Name
                                 ENDPOINTS_RAW=$(curl -s "${PORTAINER_URL}/api/endpoints" \
-                                    -H "Authorization: Bearer ${TOKEN}" | tr -d '\\000-\\037')
-                                echo "Lista de endpoints (limpa): $ENDPOINTS_RAW"
-                                ENDPOINT_ID=$(echo "$ENDPOINTS_RAW" | jq -r '.[] | select(.Name=="'${ENDPOINT_NAME}'") | .Id')
+                                    -H "Authorization: Bearer ${TOKEN}")
+                                echo "Lista bruta de endpoints: $ENDPOINTS_RAW"
+                                ENDPOINTS_CLEAN=$(echo "$ENDPOINTS_RAW" | jq 'map({Id: .Id, Name: .Name})')
+                                echo "Lista de endpoints filtrada: $ENDPOINTS_CLEAN"
+                                ENDPOINT_ID=$(echo "$ENDPOINTS_CLEAN" | jq -r '.[] | select(.Name=="'${ENDPOINT_NAME}'") | .Id')
                                 echo "ID do endpoint '${ENDPOINT_NAME}': $ENDPOINT_ID"
                                 if [ -z "$ENDPOINT_ID" ]; then
                                     echo "Erro: Endpoint '${ENDPOINT_NAME}' não encontrado no Portainer."
@@ -109,8 +111,9 @@ pipeline {
 
                                 # Verificar se a stack já existe
                                 STACKS_RAW=$(curl -s "${PORTAINER_URL}/api/stacks" \
-                                    -H "Authorization: Bearer ${TOKEN}" | tr -d '\\000-\\037')
-                                STACK_ID=$(echo "$STACKS_RAW" | jq -r '.[] | select(.Name=="'${STACK_NAME}'") | .Id')
+                                    -H "Authorization: Bearer ${TOKEN}")
+                                STACKS_CLEAN=$(echo "$STACKS_RAW" | jq 'map({Id: .Id, Name: .Name})')
+                                STACK_ID=$(echo "$STACKS_CLEAN" | jq -r '.[] | select(.Name=="'${STACK_NAME}'") | .Id')
 
                                 COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
                                 COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
