@@ -1,5 +1,5 @@
 pipeline {
-    agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy - Agora vai
+    agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy
     environment {
         REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
         GITHUB_REPO = 'AprendendoLinux/test-ipv6.git' // Repostiório no GitHub
@@ -36,46 +36,46 @@ pipeline {
             }
         }
 
-        stage('Docker Login e Build da Imagem') {
-            steps {
-                script {
-                    try {
-                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh """
-                                cd ${APP_DIR}/${APP_NAME}
-                                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-                                docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
-                                echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
-                            """
-                        }
-                    } catch (Exception e) {
-                        echo "Erro no Login ou no Build da Imagem: ${e.message}"
-                        throw e
-                    }
-                }
-            }
-        }
-
-        // stage('Push para Docker Hub') {
+        // stage('Docker Login e Build da Imagem') {
         //     steps {
         //         script {
         //             try {
         //                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
         //                     sh """
         //                         cd ${APP_DIR}/${APP_NAME}
-        //                         docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
-        //                         docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
-        //                         docker push ${DOCKER_HUB_REPO}:latest
-        //                         echo 'Imagem pushada do Dev para Docker Hub.'
+        //                         docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+        //                         docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
+        //                         echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
         //                     """
         //                 }
         //             } catch (Exception e) {
-        //                 echo "Erro Push para Docker Hub: ${e.message}"
+        //                 echo "Erro no Login ou no Build da Imagem: ${e.message}"
         //                 throw e
         //             }
         //         }
         //     }
         // }
+
+        stage('Push para Docker Hub') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh """
+                                cd ${APP_DIR}/${APP_NAME}
+                                docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+                                docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
+                                docker push ${DOCKER_HUB_REPO}:latest
+                                echo 'Imagem pushada do Dev para Docker Hub.'
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Erro Push para Docker Hub: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
 
         stage('Deploy no Servidor Prod via Portainer') {
             steps {
@@ -109,7 +109,7 @@ pipeline {
                                     RESPONSE=$(curl -v -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
-                                        -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"env\\":[],\\"fromAppTemplate\\":false}" 2>&1)
+                                        -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"fromAppTemplate\\":false,\\"env\\":[]}" 2>&1)
                                     echo "Resposta da API: $RESPONSE"
                                     if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
                                         echo "Nova stack ${STACK_NAME} criada no Portainer."
@@ -122,7 +122,7 @@ pipeline {
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
                                         -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}" 2>&1)
-                                    echo "Resposta da atualização da API: $RESPONSE"
+                                    echo "Resposta da API de atualização: $RESPONSE"
                                     echo "Stack ${STACK_NAME} atualizada no Portainer."
                                 fi
                                 echo "Deploy concluído no Prod via Portainer. Acesse http://${PROD_HOST}:8080"
