@@ -6,7 +6,6 @@ pipeline {
         BRANCH_NAME = 'main'
         DOCKER_HUB_REPO = 'aprendendolinux/test-ipv6' // Docker Hub repo
         IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
-        APP_DIR = '/var/jenkins_home' // Diretório no Dev
         APP_NAME = 'test-ipv6' // Nome do app
         GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
         DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
@@ -14,7 +13,7 @@ pipeline {
         PORTAINER_URL = 'http://portainer:9000' // URL do Portainer no Prod
         PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
         STACK_NAME = 'test-ipv6' // Nome da stack no Portainer
-        ENDPOINT_ID = 2 // ID fixo do ambiente 'echelon' identificado nos logs
+        ENDPOINT_ID = 2 // ID fixo do ambiente identificado nos logs
         // Para capiturar o ENDPOINT_ID, use:
         // curl -s -X POST -H "Content-Type: application/json" -d '{"Username": "UsuarioDoPortainer", "Password": "SenhaDoPortainer"}' http://portainer:9000/api/auth
         // O comando acima vai retonar sua API. Com a API em mãos, faça:
@@ -22,26 +21,6 @@ pipeline {
     }
 
     stages {
-        // stage('Git Clone no Dev') {
-        //     steps {
-        //         script {
-        //             try {
-        //                 withCredentials([string(credentialsId: "${GITHUB_TOKEN_ID}", variable: 'GIT_TOKEN')]) {
-        //                     sh '''
-        //                     rm -rf ${APP_DIR}/${APP_NAME}
-        //                     cd ${APP_DIR}
-        //                     git clone https://x-access-token:${GIT_TOKEN}@github.com/${GITHUB_REPO} -b ${BRANCH_NAME} ${APP_NAME}
-        //                     echo "Repositório clonado no Dev, branch ${BRANCH_NAME}."
-        //                     '''
-        //                 }
-        //             } catch (Exception e) {
-        //                 echo "Erro no Git Clone: ${e.message}"
-        //                 throw e
-        //             }
-        //         }
-        //     }
-        // }
-
         stage('Docker Login e Build da Imagem') {
             steps {
                 script {
@@ -108,7 +87,7 @@ pipeline {
                                 fi
 
                                 # Criar nova stack
-                                COMPOSE_CONTENT=$(cat "${APP_DIR}/${APP_NAME}/docker-compose.yml" | jq -sR .)
+                                COMPOSE_CONTENT=$(cat "${WORKSPACE}/docker-compose.yml" | jq -sR .)
                                 RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
                                     -H "Authorization: Bearer ${TOKEN}" \
                                     -H "Content-Type: application/json" \
@@ -119,9 +98,6 @@ pipeline {
                                     echo "Erro ao criar a stack."
                                     exit 1
                                 fi
-
-                                # Verificar rede echelon
-                                docker network ls | grep echelon || docker network create echelon
 
                                 echo "Deploy concluído. Acesse http://${PROD_HOST}:8080"
                             '''
