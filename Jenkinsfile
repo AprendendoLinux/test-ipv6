@@ -7,9 +7,9 @@ pipeline {
         IMAGE_TAG = "${BUILD_ID}" // Versionamento com ID do build Jenkins
         GITHUB_TOKEN_ID = 'gitauth_tokem' // ID da credencial Jenkins: Secret Text com PAT
         DOCKER_CREDS_ID = 'docker_auth' // ID da credencial Jenkins: Username with Password
+        PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
         PROD_HOST = 'echelon.aprendendolinux.com' // Hostname ou IP do Prod
         PORTAINER_URL = 'http://portainer:9000' // URL do Portainer no Prod
-        PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
         STACK_NAME = 'test-ipv6' // Nome da stack no Portainer
         ENDPOINT_ID = 2 // ID fixo do ambiente identificado nos logs
         // Para capiturar o ENDPOINT_ID, use:
