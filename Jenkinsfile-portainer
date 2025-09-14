@@ -1,5 +1,5 @@
 pipeline {
-    agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy
+    agent any // Roda no Jenkins (Prod), mas ações delegadas via SSH para Dev, exceto deploy - Agora vai
     environment {
         REPO_URL_BASE = 'https://github.com/AprendendoLinux/test-ipv6.git' // Repo privado
         GITHUB_REPO = 'AprendendoLinux/test-ipv6.git' // Repostiório no GitHub
@@ -106,10 +106,10 @@ pipeline {
                                 docker network ls | grep echelon || docker network create echelon
 
                                 if [ -z "$STACK_ID" ]; then
-                                    RESPONSE=$(curl -v -X POST "${PORTAINER_URL}/api/stacks" \
+                                    RESPONSE=$(curl -v -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
-                                        -d "{\\"Name\\":\\"${STACK_NAME}\\",\\"EndpointId\\":${ENDPOINT_ID},\\"StackFileContent\\":${COMPOSE_CONTENT}}" 2>&1)
+                                        -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"env\\":[],\\"fromAppTemplate\\":false}" 2>&1)
                                     echo "Resposta da API: $RESPONSE"
                                     if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
                                         echo "Nova stack ${STACK_NAME} criada no Portainer."
@@ -118,10 +118,11 @@ pipeline {
                                         exit 1
                                     fi
                                 else
-                                    curl -s -X PUT "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
+                                    RESPONSE=$(curl -v -X PUT "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
                                         -H "Authorization: Bearer ${TOKEN}" \
                                         -H "Content-Type: application/json" \
-                                        -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}"
+                                        -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}" 2>&1)
+                                    echo "Resposta da atualização da API: $RESPONSE"
                                     echo "Stack ${STACK_NAME} atualizada no Portainer."
                                 fi
                                 echo "Deploy concluído no Prod via Portainer. Acesse http://${PROD_HOST}:8080"
