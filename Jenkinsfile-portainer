@@ -46,7 +46,7 @@ pipeline {
                                 cd ${APP_DIR}/${APP_NAME}
                                 docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
                                 docker build -t ${DOCKER_HUB_REPO}:${IMAGE_TAG} .
-                                echo 'Imagem construída no Dev: ${DOCKER_HUB_REPO}:${IMAGE_TAG}'
+                                echo 'Imagem construída no Dev.'
                             """
                         }
                     } catch (Exception e) {
@@ -67,7 +67,7 @@ pipeline {
         //                         docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
         //                         docker tag ${DOCKER_HUB_REPO}:${IMAGE_TAG} ${DOCKER_HUB_REPO}:latest
         //                         docker push ${DOCKER_HUB_REPO}:latest
-        //                         echo 'Imagem pushada do Dev para Docker Hub.'
+        //                         echo 'Imagem pushada para Docker Hub.'
         //                     """
         //                 }
         //             } catch (Exception e) {
@@ -84,50 +84,43 @@ pipeline {
                     try {
                         withCredentials([usernamePassword(credentialsId: "${PORTAINER_CREDS_ID}", usernameVariable: 'PORTAINER_USER', passwordVariable: 'PORTAINER_PASS')]) {
                             sh '''
-                                # Obter token JWT do Portainer com depuração
+                                # Obter token JWT do Portainer
                                 AUTH_RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/auth" \
                                     -H "Content-Type: application/json" \
                                     -d "{\\"Username\\":\\"${PORTAINER_USER}\\",\\"Password\\":\\"${PORTAINER_PASS}\\"}")
-                                echo "Resposta da autenticação: $AUTH_RESPONSE"
                                 TOKEN=$(echo "$AUTH_RESPONSE" | jq -r '.jwt')
-                                echo "Token gerado: $TOKEN"
                                 if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
-                                    echo "Erro: Token inválido ou não gerado. Verifique as credenciais."
+                                    echo "Erro: Token inválido ou não gerado."
                                     exit 1
                                 fi
 
-                                # Verificar se a stack já existe
+                                # Verificar e remover stack existente
                                 STACKS_RAW=$(curl -s "${PORTAINER_URL}/api/stacks" \
                                     -H "Authorization: Bearer ${TOKEN}")
-                                STACKS_CLEAN=$(echo "$STACKS_RAW" | tr -d '\\000-\\037' | jq 'map({Id: .Id, Name: .Name})')
-                                STACK_ID=$(echo "$STACKS_CLEAN" | jq -r '.[] | select(.Name=="'${STACK_NAME}'") | .Id')
+                                STACK_ID=$(echo "$STACKS_RAW" | tr -d '\\000-\\037' | jq -r '.[] | select(.Name=="'${STACK_NAME}'") | .Id')
+                                if [ ! -z "$STACK_ID" ]; then
+                                    curl -s -X DELETE "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
+                                        -H "Authorization: Bearer ${TOKEN}"
+                                    echo "Stack ${STACK_NAME} removida (ID: ${STACK_ID})."
+                                fi
 
+                                # Criar nova stack
                                 COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
                                 COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
+                                RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
+                                    -H "Authorization: Bearer ${TOKEN}" \
+                                    -H "Content-Type: application/json" \
+                                    -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"fromAppTemplate\\":false,\\"env\\":[]}")
+                                if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
+                                    echo "Nova stack ${STACK_NAME} criada."
+                                else
+                                    echo "Erro ao criar a stack. Resposta: $RESPONSE"
+                                    exit 1
+                                fi
 
                                 # Verificar se a rede echelon existe no endpoint
                                 docker network ls | grep echelon || docker network create echelon
 
-                                if [ -z "$STACK_ID" ]; then
-                                    RESPONSE=$(curl -s -X POST "${PORTAINER_URL}/api/stacks/create/standalone/string?endpointId=${ENDPOINT_ID}" \
-                                        -H "Authorization: Bearer ${TOKEN}" \
-                                        -H "Content-Type: application/json" \
-                                        -d "{\\"name\\":\\"${STACK_NAME}\\",\\"stackFileContent\\":${COMPOSE_CONTENT},\\"fromAppTemplate\\":false,\\"env\\":[]}")
-                                    echo "Resposta da API: $RESPONSE"
-                                    if echo "$RESPONSE" | jq -e '.Id' > /dev/null 2>&1; then
-                                        echo "Nova stack ${STACK_NAME} criada no Portainer."
-                                    else
-                                        echo "Erro ao criar a stack. Resposta: $RESPONSE"
-                                        exit 1
-                                    fi
-                                else
-                                    RESPONSE=$(curl -s -X PUT "${PORTAINER_URL}/api/stacks/${STACK_ID}?endpointId=${ENDPOINT_ID}" \
-                                        -H "Authorization: Bearer ${TOKEN}" \
-                                        -H "Content-Type: application/json" \
-                                        -d "{\\"StackFileContent\\":${COMPOSE_CONTENT},\\"Prune\\":true}")
-                                    echo "Resposta da API de atualização: $RESPONSE"
-                                    echo "Stack ${STACK_NAME} atualizada no Portainer."
-                                fi
                                 echo "Deploy concluído no Prod via Portainer. Acesse http://${PROD_HOST}:8080"
                             '''
                         }
@@ -142,7 +135,7 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline bem-sucedida! Todas as ações executadas, deploy via Portainer concluído.'
+            echo 'Pipeline bem-sucedida! Deploy via Portainer concluído.'
         }
         failure {
             echo 'Pipeline falhou. Verifique logs, conexões SSH/Docker e API do Portainer no Prod.'
