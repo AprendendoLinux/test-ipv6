@@ -13,7 +13,7 @@ pipeline {
         PORTAINER_URL = 'http://portainer:9000' // URL do Portainer no Prod
         PORTAINER_CREDS_ID = 'portainer_auth' // ID da credencial Jenkins: Username with Password para Portainer
         STACK_NAME = 'test-ipv6-stack' // Nome da stack no Portainer
-        ENDPOINT_NAME = 'echelon' // Nome do ambiente no Portainer (ajuste se necessário)
+        ENDPOINT_NAME = 'echelon' // Nome do ambiente no Portainer (confirme na interface se exato)
     }
 
     stages {
@@ -96,11 +96,11 @@ pipeline {
                                     exit 1
                                 fi
 
-                                # Obter o ID do endpoint pelo nome 'echelon'
-                                ENDPOINTS_LIST=$(curl -s "${PORTAINER_URL}/api/endpoints" \
-                                    -H "Authorization: Bearer ${TOKEN}")
-                                echo "Lista de endpoints: $ENDPOINTS_LIST"
-                                ENDPOINT_ID=$(echo "$ENDPOINTS_LIST" | jq -r '.[] | select(.Name=="'${ENDPOINT_NAME}'") | .Id')
+                                # Obter a lista de endpoints, limpando caracteres de controle
+                                ENDPOINTS_RAW=$(curl -s "${PORTAINER_URL}/api/endpoints" \
+                                    -H "Authorization: Bearer ${TOKEN}" | tr -d '\\000-\\037')
+                                echo "Lista de endpoints (limpa): $ENDPOINTS_RAW"
+                                ENDPOINT_ID=$(echo "$ENDPOINTS_RAW" | jq -r '.[] | select(.Name=="'${ENDPOINT_NAME}'") | .Id')
                                 echo "ID do endpoint '${ENDPOINT_NAME}': $ENDPOINT_ID"
                                 if [ -z "$ENDPOINT_ID" ]; then
                                     echo "Erro: Endpoint '${ENDPOINT_NAME}' não encontrado no Portainer."
@@ -108,8 +108,9 @@ pipeline {
                                 fi
 
                                 # Verificar se a stack já existe
-                                STACK_ID=$(curl -s "${PORTAINER_URL}/api/stacks" \
-                                    -H "Authorization: Bearer ${TOKEN}" | jq -r ".[] | select(.Name==\\"${STACK_NAME}\\") | .Id")
+                                STACKS_RAW=$(curl -s "${PORTAINER_URL}/api/stacks" \
+                                    -H "Authorization: Bearer ${TOKEN}" | tr -d '\\000-\\037')
+                                STACK_ID=$(echo "$STACKS_RAW" | jq -r '.[] | select(.Name=="'${STACK_NAME}'") | .Id')
 
                                 COMPOSE_FILE="${APP_DIR}/${APP_NAME}/docker-compose.yml"
                                 COMPOSE_CONTENT=$(cat ${COMPOSE_FILE} | jq -sR .)
