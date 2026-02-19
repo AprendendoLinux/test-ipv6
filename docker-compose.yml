@@ -1,8 +1,15 @@
+networks:
+  network-ipv6:
+    driver: bridge
+    enable_ipv6: true
+
 services:
   test-ipv6:
     container_name: test-ipv6
     hostname: test-ipv6
-    image: aprendendolinux/test-ipv6:latest
+    networks:
+      - network-ipv6
+    image: ghcr.io/aprendendolinux/test-ipv6:latest
     restart: always
     ports:
-       - 8080:8080
+      - '8080:8080'

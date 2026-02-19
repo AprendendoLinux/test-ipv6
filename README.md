@@ -21,13 +21,11 @@ A aplicação realiza uma verificação simples para identificar se o IPv6 está
 
     services:
       test-ipv6:
-        depends_on:
-          - proxy
         container_name: test-ipv6
         hostname: test-ipv6
         networks:
           - network-ipv6
-        image: aprendendolinux/test-ipv6
+        image: ghcr.io/aprendendolinux/test-ipv6:latest
         restart: always
         ports:
           - '8080:8080'

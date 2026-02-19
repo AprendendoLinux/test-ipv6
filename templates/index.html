@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scanner de Rede</title>
+
+    <meta property="og:title" content="Scanner de Rede | Diagnóstico IPv4 & IPv6">
+    <meta property="og:description" content="Ferramenta profissional de diagnóstico de rede. Descubra em tempo real seu IP, Provedor, DNS Reverso e Localidade.">
+    <meta property="og:image" content="{{ url_for('static', filename='card.jpg', _external=True) }}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Scanner de Rede | Diagnóstico IPv4 & IPv6">
+    <meta name="twitter:description" content="Ferramenta profissional de diagnóstico de rede. Descubra em tempo real seu IP, Provedor, DNS Reverso e Localidade.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='card.jpg', _external=True) }}">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">

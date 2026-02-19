@@ -3,7 +3,7 @@
 __pycache__
 *.pyc
 docker-compose.yml
-docker-compose-firenet.yml
+docker-compose-ipv6.yml
 Dockerfile
 README.md
 LICENSE
