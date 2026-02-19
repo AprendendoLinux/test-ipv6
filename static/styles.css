@@ -1,88 +1,224 @@
+/* Importando fontes limpas e tecnológicas */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
+
+:root {
+    --bg-base: #0b0c10;
+    --card-bg: rgba(31, 40, 51, 0.85);
+    --card-border: rgba(255, 255, 255, 0.05);
+    --v4-color: #00e5ff; /* Ciano Brilhante */
+    --v6-color: #39ff14; /* Verde Neon */
+    --text-main: #ffffff;
+    --text-muted: #8a9ba8;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to bottom, #f0f0f0, #ffffff);
-    color: #333;
-    text-align: center;
-    padding: 20px;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    border-radius: 10px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    color: #007BFF;
-}
-
-p {
-    font-size: 1.2em;
-    margin: 10px 0;
-}
-
-.message {
-    font-size: 1.5em;
-    font-weight: bold;
-}
-
-.success {
-    color: #28a745;
-}
-
-.error {
-    color: #dc3545;
-}
-
-.logo {
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    display: none;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    /* Adiciona padding na base para que o conteúdo não fique escondido sob o rodapé fixo */
+    padding-bottom: 70px; 
     position: relative;
 }
 
-.logo-ipv6 {
-    background-color: #28a745;
-    color: #ffeb3b;
-    line-height: 100px;
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
+/* Fundo limpo com padrão muito sutil */
+.bg-animation {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: radial-gradient(circle at 50% 0%, #1a222c 0%, var(--bg-base) 70%);
+    z-index: -1;
 }
 
-.logo-ipv4 {
-    background-color: #dc3545;
-    color: #ffeb3b;
-    line-height: 100px;
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
+.main-content {
+    padding-top: 30px;
+    position: relative;
+    z-index: 1;
 }
 
-.logo-ipv6::before, .logo-ipv4::before {
-    content: "";
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    width: 110px;
-    height: 110px;
-    border: 5px solid;
+/* Cabeçalho */
+.header-icon {
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+}
+.header-title {
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 5px;
+    color: var(--text-main);
+}
+.header-subtitle {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+}
+
+/* CARDS Responsivos e Legíveis */
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 30px 25px;
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease;
+}
+
+.glass-card:hover { transform: translateY(-3px); }
+
+.card-header-custom i {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+}
+.card-header-custom h3 {
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 1.3rem;
+    margin-bottom: 25px;
+    color: var(--text-main);
+}
+
+.v4-color { color: var(--v4-color); text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
+.v6-color { color: var(--v6-color); text-shadow: 0 0 8px rgba(57, 255, 20, 0.4); }
+
+/* Display de IP destacado (Fonte Monoespaçada) */
+.ip-display {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 25px;
+    word-break: break-all;
+    background: rgba(0,0,0,0.4);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Grid de Informações - Alto Contraste */
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+}
+.card-v4 .info-item { border-left-color: var(--v4-color); }
+.card-v6 .info-item { border-left-color: var(--v6-color); }
+
+.info-label {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.info-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+}
+
+/* Estado de Erro para IPv6 */
+.error-state {
+    color: #ff3366;
+    padding: 15px;
+    background: rgba(255, 51, 102, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 51, 102, 0.2);
+}
+.error-state i { font-size: 1.8rem; margin-bottom: 8px; }
+.error-state p { margin: 0; font-size: 1.1rem; font-weight: 500; color: #ff99aa; }
+
+/* Loader Centralizado */
+.loader {
+    width: 45px; height: 45px;
+    border: 3px solid rgba(255,255,255,0.05);
     border-radius: 50%;
-    box-sizing: border-box;
-    animation: spin 2s linear infinite;
-    border-color: #ffeb3b transparent transparent transparent;
+    margin: 40px auto;
+    animation: spin 1s linear infinite;
+}
+.v4-loader { border-top-color: var(--v4-color); }
+.v6-loader { border-top-color: var(--v6-color); }
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.content-fade { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* =========================================
+   RODAPÉ FIXO E CENTRALIZADO
+========================================= */
+.fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 45px; /* Bem fininho */
+    background: rgba(11, 12, 16, 0.98); /* Cor sólida para garantir a leitura */
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: center; /* CENTRALIZA OS ELEMENTOS HORIZONTALMENTE */
+    align-items: center;     /* CENTRALIZA OS ELEMENTOS VERTICALMENTE */
+    z-index: 9999;
+    font-size: 1rem;
+    gap: 15px; /* Espaço entre o texto e a versão */
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
+.footer-text {
+    color: var(--text-muted);
+}
+.footer-text a {
+    color: var(--v4-color);
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+.footer-text a:hover {
+    color: #ffffff;
+    text-shadow: 0 0 8px var(--v4-color);
+}
+.footer-separator {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+.footer-version {
+    color: var(--v6-color);
+    background: rgba(57, 255, 20, 0.08);
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(57, 255, 20, 0.2);
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+}
+
+/* Ajustes para Telas de Celulares */
+@media (max-width: 768px) {
+    .ip-display { font-size: 1.3rem; }
+    .info-item { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .info-value { text-align: left; max-width: 100%; }
+    
+    /* Adaptação do Rodapé no Celular */
+    .fixed-footer { 
+        height: auto; 
+        padding: 10px 5px; 
+        flex-direction: column; /* Coloca um em cima do outro se faltar espaço */
+        gap: 5px; 
     }
-    100% {
-        transform: rotate(360deg);
-    }
+    .footer-separator { display: none; }
 }

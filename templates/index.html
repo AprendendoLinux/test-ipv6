@@ -1,81 +1,179 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Endereço IP</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner de Rede</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles-footer.css') }}">
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <div class="container main-content">
+        <div class="text-center mb-5 mt-4 header-section">
+            <i class="fas fa-network-wired header-icon"></i>
+            <h1 class="header-title">DIAGNÓSTICO DE REDE</h1>
+            <p class="header-subtitle">Análise avançada de protocolos de conexão</p>
+        </div>
+
+        <div class="row justify-content-center g-4">
+            <div class="col-md-6 col-lg-5">
+                <div class="glass-card card-v4">
+                    <div class="card-header-custom text-center">
+                        <i class="fas fa-globe-americas v4-color"></i>
+                        <h3>Protocolo IPv4</h3>
+                    </div>
+                    <div class="card-body-custom">
+                        <div id="v4-loader" class="loader v4-loader"></div>
+                        <div id="v4-content" class="d-none content-fade">
+                            <div class="ip-display v4-color" id="v4-ip">...</div>
+                            
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-building"></i> Provedor</span>
+                                    <span class="info-value" id="v4-org">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-server"></i> DNS Reverso</span>
+                                    <span class="info-value" id="v4-dns">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-map-marker-alt"></i> Localidade</span>
+                                    <span class="info-value" id="v4-loc">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-5">
+                <div class="glass-card card-v6" id="v6-card">
+                    <div class="card-header-custom text-center">
+                        <i class="fas fa-space-shuttle v6-color"></i>
+                        <h3>Protocolo IPv6</h3>
+                    </div>
+                    <div class="card-body-custom">
+                        <div id="v6-loader" class="loader v6-loader"></div>
+                        <div id="v6-content" class="d-none content-fade">
+                            <div class="ip-display v6-color" id="v6-ip">...</div>
+                            
+                            <div class="info-grid" id="v6-details">
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-building"></i> Provedor</span>
+                                    <span class="info-value" id="v6-org">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-server"></i> DNS Reverso</span>
+                                    <span class="info-value" id="v6-dns">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-map-marker-alt"></i> Localidade</span>
+                                    <span class="info-value" id="v6-loc">-</span>
+                                </div>
+                            </div>
+                            
+                            <div id="v6-error" class="d-none error-state text-center mt-4">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>Sua rede não possui suporte a IPv6 ativo no momento.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="fixed-footer">
+        <span class="footer-text">
+            Desenvolvido por <a href="https://www.henrique.tec.br" target="_blank">Henrique Fagundes</a>
+        </span>
+        <span class="footer-separator">|</span>
+        <span class="footer-version">
+            <i class="fas fa-code-branch"></i> v. {{ version }}
+        </span>
+    </footer>
+
     <script>
-        async function getIPInfo() {
+        async function fetchWithTimeout(resource, options = {}) {
+            const { timeout = 6000 } = options;
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            const response = await fetch(resource, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return response;
+        }
+
+        async function fetchIpDetails(ip, type) {
             try {
-                const ipv4Response = await fetch('https://api.ipify.org?format=json');
-                const ipv4Data = await ipv4Response.json();
-                const clientIP = ipv4Data.ip;
-
-                document.getElementById('ipv4-address').textContent = clientIP;
-
-                const serverResponse = await fetch('/ip-info', {
+                const response = await fetch('/ip-info', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ip: clientIP})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip })
                 });
-
-                const serverData = await serverResponse.json();
-                document.getElementById('provider-info').textContent = serverData.org;
-                document.getElementById('reverse-dns').textContent = serverData.reverse_dns || 'Não encontrado';
-
-                const ipv6Response = await fetch('https://api6.ipify.org?format=json');
-                const ipv6Data = await ipv6Response.json();
-                if (ipv6Data.ip) {
-                    document.getElementById('ipv6-address').textContent = ipv6Data.ip;
-                    document.getElementById('ipv6-message').textContent = 'Parabéns! Você está usando IPv6!';
-                    document.getElementById('ipv6-message').classList.add('success');
-                    document.querySelector('.logo-ipv6').style.display = 'block';
-                } else {
-                    document.getElementById('ipv6-address').textContent = 'Não detectado';
-                    document.getElementById('ipv6-message').textContent = 'Lamentamos, IPv6 não detectado. Você está usando apenas IPv4.';
-                    document.getElementById('ipv6-message').classList.add('error');
-                    document.querySelector('.logo-ipv4').style.display = 'block';
-                }
+                const data = await response.json();
+                
+                document.getElementById(`${type}-org`).textContent = data.org || 'N/A';
+                document.getElementById(`${type}-dns`).textContent = data.reverse_dns || 'N/A';
+                document.getElementById(`${type}-loc`).textContent = (data.city && data.country) ? `${data.city}, ${data.country}` : 'N/A';
             } catch (error) {
-                console.error('Error fetching IP info:', error);
-                document.getElementById('ipv6-address').textContent = 'Não detectado';
-                document.getElementById('ipv6-message').textContent = 'Lamentamos, IPv6 não detectado. Você está usando apenas IPv4.';
-                document.getElementById('ipv6-message').classList.add('error');
-                document.querySelector('.logo-ipv4').style.display = 'block';
+                console.error(`Erro ao buscar detalhes:`, error);
             }
         }
 
-        window.onload = getIPInfo;
+        async function detectNetworks() {
+            // DETECÇÃO IPv4
+            try {
+                let ipv4Response;
+                try { ipv4Response = await fetchWithTimeout('https://api.ipify.org?format=json'); } 
+                catch(e) { ipv4Response = await fetchWithTimeout('https://ipv4.seeip.org/jsonip'); }
+                
+                const ipv4Data = await ipv4Response.json();
+                document.getElementById('v4-ip').textContent = ipv4Data.ip;
+                
+                document.getElementById('v4-loader').classList.add('d-none');
+                document.getElementById('v4-content').classList.remove('d-none');
+                
+                await fetchIpDetails(ipv4Data.ip, 'v4');
+            } catch (error) {
+                document.getElementById('v4-ip').textContent = 'Erro';
+                document.getElementById('v4-loader').classList.add('d-none');
+                document.getElementById('v4-content').classList.remove('d-none');
+            }
+
+            // DETECÇÃO IPv6
+            try {
+                let ipv6Response;
+                try { ipv6Response = await fetchWithTimeout('https://api6.ipify.org?format=json', { timeout: 4000 }); } 
+                catch(e) { ipv6Response = await fetchWithTimeout('https://ipv6.seeip.org/jsonip', { timeout: 4000 }); }
+                
+                const ipv6Data = await ipv6Response.json();
+                
+                if (ipv6Data.ip && ipv6Data.ip.includes(':')) {
+                    document.getElementById('v6-ip').textContent = ipv6Data.ip;
+                    document.getElementById('v6-loader').classList.add('d-none');
+                    document.getElementById('v6-content').classList.remove('d-none');
+                    
+                    await fetchIpDetails(ipv6Data.ip, 'v6');
+                } else {
+                    throw new Error("Não é IPv6");
+                }
+            } catch (error) {
+                document.getElementById('v6-ip').textContent = 'Inativo';
+                document.getElementById('v6-ip').style.color = '#ff3366';
+                document.getElementById('v6-ip').style.textShadow = '0 0 10px rgba(255, 51, 102, 0.4)';
+                document.getElementById('v6-details').classList.add('d-none');
+                
+                document.getElementById('v6-loader').classList.add('d-none');
+                document.getElementById('v6-content').classList.remove('d-none');
+                document.getElementById('v6-error').classList.remove('d-none');
+                document.getElementById('v6-card').style.borderColor = 'rgba(255, 51, 102, 0.3)';
+            }
+        }
+
+        window.onload = detectNetworks;
     </script>
-</head>
-<body>
-<div class="banner">
-        <a href="https://www.aprendendolinux.com">
-            <img src="static/banner.jpg" alt="Aprendendo Linux">
-        </a>
-    </div>
-	<br><br>
-    <div class="container">
-        <div class="logo logo-ipv6">IPv6</div>
-        <div class="logo logo-ipv4">IPv4</div>
-        <h1>Seu Endereço IP</h1>
-        <p>IPv4: <span id="ipv4-address">Carregando...</span></p>
-        <p><span class="ipv6-address-container">IPv6: <span id="ipv6-address">Carregando...</span></span></p>
-        <p id="ipv6-message" class="message">Carregando...</p>
-        <p>Provedor: <span id="provider-info">Carregando...</span></p>
-        <p>DNS Reverso: <span id="reverse-dns">Carregando...</span></p>
-    </div>
-<br><br>
-<div class="banner">
-        <a href="https://www.aprendendolinux.com">
-            <img src="static/banner.jpg" alt="Aprendendo Linux">
-        </a>
-    </div>
-<!-- Rodapé -->
-<footer class="footer">
-    <p><a href="https://www.henrique.tec.br" class="footer-link">Desenvolvido Por Henrique Fagundes</a></p>
-</footer>
 </body>
 </html>
