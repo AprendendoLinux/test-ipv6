@@ -222,3 +222,12 @@ body {
     }
     .footer-separator { display: none; }
 }
+/* Card do dispositivo */
+.client-color { color: var(--v-client, #b026ff); text-shadow: 0 0 8px rgba(176, 38, 255, 0.5); }
+.card-client { --v-client: #b026ff; height: auto; border-color: rgba(176, 38, 255, 0.2); }
+.client-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+}
+.card-client .info-item { border-left-color: var(--v-client); }

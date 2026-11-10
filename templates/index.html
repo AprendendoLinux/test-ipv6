@@ -44,6 +44,14 @@
                             
                             <div class="info-grid">
                                 <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-network-wired"></i> Tipo / Escopo</span>
+                                    <span class="info-value" id="v4-scope">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-hashtag"></i> ASN</span>
+                                    <span class="info-value" id="v4-asn">-</span>
+                                </div>
+                                <div class="info-item">
                                     <span class="info-label"><i class="fas fa-building"></i> Provedor</span>
                                     <span class="info-value" id="v4-org">-</span>
                                 </div>
@@ -55,7 +63,19 @@
                                     <span class="info-label"><i class="fas fa-map-marker-alt"></i> Localidade</span>
                                     <span class="info-value" id="v4-loc">-</span>
                                 </div>
-                            </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-map-pin"></i> Região / CEP</span>
+                                    <span class="info-value" id="v4-region">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-clock"></i> Fuso horário</span>
+                                    <span class="info-value" id="v4-tz">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-location-crosshairs"></i> Coordenadas</span>
+                                    <span class="info-value" id="v4-coord">-</span>
+                                </div>
+</div>
                         </div>
                     </div>
                 </div>
@@ -74,6 +94,14 @@
                             
                             <div class="info-grid" id="v6-details">
                                 <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-network-wired"></i> Tipo / Escopo</span>
+                                    <span class="info-value" id="v6-scope">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-hashtag"></i> ASN</span>
+                                    <span class="info-value" id="v6-asn">-</span>
+                                </div>
+                                <div class="info-item">
                                     <span class="info-label"><i class="fas fa-building"></i> Provedor</span>
                                     <span class="info-value" id="v6-org">-</span>
                                 </div>
@@ -85,7 +113,19 @@
                                     <span class="info-label"><i class="fas fa-map-marker-alt"></i> Localidade</span>
                                     <span class="info-value" id="v6-loc">-</span>
                                 </div>
-                            </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-map-pin"></i> Região / CEP</span>
+                                    <span class="info-value" id="v6-region">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-clock"></i> Fuso horário</span>
+                                    <span class="info-value" id="v6-tz">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label"><i class="fas fa-location-crosshairs"></i> Coordenadas</span>
+                                    <span class="info-value" id="v6-coord">-</span>
+                                </div>
+</div>
                             
                             <div id="v6-error" class="d-none error-state text-center mt-4">
                                 <i class="fas fa-exclamation-triangle"></i>
@@ -93,6 +133,18 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center g-4 mt-1">
+            <div class="col-md-12 col-lg-10">
+                <div class="glass-card card-client">
+                    <div class="card-header-custom text-center">
+                        <i class="fas fa-laptop-code client-color"></i>
+                        <h3>Seu Dispositivo</h3>
+                    </div>
+                    <div class="client-grid" id="client-grid"></div>
                 </div>
             </div>
         </div>
@@ -118,6 +170,50 @@
             return response;
         }
 
+        function setText(id, value) {
+            document.getElementById(id).textContent = value || 'N/A';
+        }
+
+        function parseUA(ua) {
+            const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Firefox\//.test(ua) ? 'Firefox'
+                : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Desconhecido';
+            const os = /Windows/.test(ua) ? 'Windows' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS'
+                : /Mac OS X/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'Desconhecido';
+            return { browser, os };
+        }
+
+        function renderClientInfo() {
+            const ua = navigator.userAgent;
+            const { browser, os } = parseUA(ua);
+            const conn = navigator.connection || {};
+            const items = [
+                ['fa-globe', 'Navegador', browser],
+                ['fa-desktop', 'Sistema', os],
+                ['fa-language', 'Idioma', navigator.language],
+                ['fa-clock', 'Fuso local', Intl.DateTimeFormat().resolvedOptions().timeZone],
+                ['fa-expand', 'Tela', `${screen.width}x${screen.height} @${window.devicePixelRatio}x`],
+                ['fa-microchip', 'CPU (threads)', navigator.hardwareConcurrency],
+                ['fa-wifi', 'Conexão', conn.effectiveType ? `${conn.effectiveType.toUpperCase()}${conn.downlink ? ' · ' + conn.downlink + ' Mbps' : ''}` : 'N/A'],
+                ['fa-gauge-high', 'Latência (RTT)', conn.rtt !== undefined ? `${conn.rtt} ms` : 'N/A'],
+                ['fa-shield-halved', 'Do Not Track', navigator.doNotTrack === '1' ? 'Ativo' : 'Inativo'],
+                ['fa-plug', 'Online', navigator.onLine ? 'Sim' : 'Não'],
+            ];
+            const grid = document.getElementById('client-grid');
+            items.forEach(([icon, label, value]) => {
+                const item = document.createElement('div');
+                item.className = 'info-item';
+                const l = document.createElement('span');
+                l.className = 'info-label';
+                l.innerHTML = `<i class="fas ${icon}"></i> `;
+                l.append(label);
+                const v = document.createElement('span');
+                v.className = 'info-value';
+                v.textContent = value || 'N/A';
+                item.append(l, v);
+                grid.appendChild(item);
+            });
+        }
+
         async function fetchIpDetails(ip, type) {
             try {
                 const response = await fetch('/ip-info', {
@@ -125,13 +221,21 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ip: ip })
                 });
-                const data = await response.json();
-                
-                document.getElementById(`${type}-org`).textContent = data.org || 'N/A';
-                document.getElementById(`${type}-dns`).textContent = data.reverse_dns || 'N/A';
-                document.getElementById(`${type}-loc`).textContent = (data.city && data.country) ? `${data.city}, ${data.country}` : 'N/A';
+                const d = await response.json();
+                if (!response.ok) throw new Error(d.error);
+
+                const place = [d.city, d.country].filter(x => x && x !== 'N/A').join(', ');
+                const region = [d.region, d.postal].filter(x => x && x !== 'N/A').join(' · ');
+                setText(`${type}-scope`, `${d.version} · ${d.scope}`);
+                setText(`${type}-asn`, d.asn);
+                setText(`${type}-org`, d.org);
+                setText(`${type}-dns`, d.reverse_dns);
+                setText(`${type}-loc`, place);
+                setText(`${type}-region`, region);
+                setText(`${type}-tz`, d.timezone);
+                setText(`${type}-coord`, d.loc);
             } catch (error) {
-                console.error(`Erro ao buscar detalhes:`, error);
+                console.error('Erro ao buscar detalhes:', error);
             }
         }
 
@@ -185,7 +289,7 @@
             }
         }
 
-        window.onload = detectNetworks;
+        window.onload = () => { renderClientInfo(); detectNetworks(); };
     </script>
 </body>
 </html>
