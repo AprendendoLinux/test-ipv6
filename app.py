@@ -1,7 +1,7 @@
 import os
 import ipaddress
 import socket
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, make_response
 import requests
 
 app = Flask(__name__)
@@ -59,6 +59,13 @@ def classify_ip(addr):
 def index():
     version = os.environ.get('APP_VERSION', 'dev-local')
     return render_template('index.html', version=version)
+
+
+@app.route('/ping')
+def ping():
+    resp = make_response('', 204)
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
 
 @app.route('/ip-info', methods=['POST'])

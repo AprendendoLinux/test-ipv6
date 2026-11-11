@@ -194,7 +194,7 @@
                 ['fa-expand', 'Tela', `${screen.width}x${screen.height} @${window.devicePixelRatio}x`],
                 ['fa-microchip', 'CPU (threads)', navigator.hardwareConcurrency],
                 ['fa-wifi', 'Conexão', conn.effectiveType ? `${conn.effectiveType.toUpperCase()}${conn.downlink ? ' · ' + conn.downlink + ' Mbps' : ''}` : 'N/A'],
-                ['fa-gauge-high', 'Latência (RTT)', conn.rtt !== undefined ? `${conn.rtt} ms` : 'N/A'],
+                ['fa-gauge-high', 'Latência (RTT)', 'Medindo...'],
                 ['fa-shield-halved', 'Do Not Track', navigator.doNotTrack === '1' ? 'Ativo' : 'Inativo'],
                 ['fa-plug', 'Online', navigator.onLine ? 'Sim' : 'Não'],
             ];
@@ -208,10 +208,29 @@
                 l.append(label);
                 const v = document.createElement('span');
                 v.className = 'info-value';
+                if (label === 'Latência (RTT)') v.id = 'rtt-value';
                 v.textContent = value || 'N/A';
                 item.append(l, v);
                 grid.appendChild(item);
             });
+            measureLatency();
+        }
+
+        async function measureLatency() {
+            const el = document.getElementById('rtt-value');
+            const samples = [];
+            try {
+                await fetch('/ping', { cache: 'no-store' });
+                for (let i = 0; i < 5; i++) {
+                    const t0 = performance.now();
+                    await fetch(`/ping?t=${Date.now()}${i}`, { cache: 'no-store' });
+                    samples.push(performance.now() - t0);
+                }
+                samples.sort((a, b) => a - b);
+                el.textContent = `${Math.round(samples[Math.floor(samples.length / 2)])} ms`;
+            } catch (e) {
+                el.textContent = 'N/A';
+            }
         }
 
         async function fetchIpDetails(ip, type) {
